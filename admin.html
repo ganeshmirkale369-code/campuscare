@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CampusCare Admin Login</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+    color: #263238;
+}
+
+header {
+    background: #12345a;
+    color: white;
+    padding: 22px;
+    text-align: center;
+}
+
+main {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 15px;
+}
+
+.box {
+    background: white;
+    padding: 22px;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px #0001;
+}
+
+h2 {
+    color: #12345a;
+    margin-bottom: 18px;
+}
+
+label {
+    display: block;
+    margin: 12px 0 6px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccd3dc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background: #00a99d;
+    color: white;
+    font-weight: bold;
+    margin-top: 18px;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.6;
+}
+
+#message {
+    margin-top: 15px;
+    overflow-wrap: anywhere;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>CampusCare</h1>
+    <p>Administrator Login</p>
+</header>
+
+<main>
+
+<section class="box">
+
+    <h2>Admin Login</h2>
+
+    <form id="loginForm">
+
+        <label for="email">Email Address</label>
+        <input
+            type="email"
+            id="email"
+            autocomplete="username"
+            required
+        >
+
+        <label for="password">Password</label>
+        <input
+            type="password"
+            id="password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button type="submit" id="loginButton">
+            Login
+        </button>
+
+    </form>
+
+    <p id="message"></p>
+
+</section>
+
+</main>
+
+<script type="module">
+
+import { supabase } from "./js/supabase.js";
+
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const message = document.getElementById("message");
+
+// Prevent spaces while typing
+[emailInput, passwordInput].forEach(input => {
+
+    input.addEventListener("input", () => {
+
+        input.value = input.value.replace(/\s/g, "");
+
+    });
+
+});
+
+// Verify administrator
+async function verifyAdmin() {
+
+    const { data, error } =
+        await supabase.functions.invoke(
+            "admin-list-complaints"
+        );
+
+    console.log("Admin verification:", data);
+    console.log("Admin verification error:", error);
+
+    if (error || !data?.success) {
+
+        return {
+            success: false,
+            message: data?.error || error?.message ||
+                "Admin verification failed."
+        };
+
+    }
+
+    return { success: true };
+
+}
+
+// Admin login
+loginForm.addEventListener("submit", async (event) => {
+
+    event.preventDefault();
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+
+        message.textContent =
+            "Please enter email and password.";
+
+        return;
+
+    }
+
+    if (/\s/.test(email) || /\s/.test(password)) {
+
+        message.textContent =
+            "Spaces are not allowed.";
+
+        return;
+
+    }
+
+    loginButton.disabled = true;
+    message.textContent = "Checking login...";
+
+    try {
+
+        // Step 1: Supabase login
+        const { data: loginData, error: loginError } =
+            await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+        if (loginError) {
+
+            message.textContent =
+                "Login failed: " + loginError.message;
+
+            return;
+
+        }
+
+        if (!loginData.session) {
+
+            message.textContent =
+                "Login failed: No active session.";
+
+            return;
+
+        }
+
+        // Step 2: Verify admin account
+        message.textContent = "Verifying administrator...";
+
+        const result = await verifyAdmin();
+
+        if (!result.success) {
+
+            message.textContent =
+                "Admin verification failed: " + result.message;
+
+            await supabase.auth.signOut();
+
+            return;
+
+        }
+
+        // Step 3: Open dashboard
+        message.textContent =
+            "Login successful. Opening dashboard...";
+
+        window.location.assign("./dashboard.html");
+
+    } catch (error) {
+
+        console.error("Login error:", error);
+
+        message.textContent =
+            "Error: " + error.message;
+
+    } finally {
+
+        loginButton.disabled = false;
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

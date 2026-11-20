@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Complaint - CampusCare</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #263238;
+        }
+
+        header {
+            background: #12345a;
+            color: white;
+            text-align: center;
+            padding: 25px 15px;
+        }
+
+        main {
+            max-width: 550px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .form-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            color: #12345a;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            font-weight: bold;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd3dc;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: Arial, sans-serif;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background: #00a99d;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #12345a;
+            text-decoration: none;
+        }
+
+        #receipt {
+            display: none;
+            margin-top: 20px;
+            padding: 18px;
+            background: #e8f8f5;
+            border-radius: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        #receipt h3 {
+            color: #08796f;
+            margin-bottom: 12px;
+        }
+
+        #referenceNumber,
+        #trackingCode {
+            font-weight: bold;
+            color: #12345a;
+            font-size: 17px;
+        }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>CampusCare</h1>
+    <p>Anonymous Complaint Submission</p>
+</header>
+
+<main>
+
+    <div class="form-box">
+
+        <h2>Submit Your Complaint</h2>
+
+        <p>
+            Report your college problem without entering
+            your name or personal details.
+        </p>
+
+        <form id="complaintForm">
+
+            <label for="category">Complaint Category</label>
+
+            <select id="category" required>
+                <option value="">Select Category</option>
+                <option value="Water Problem">Water Problem</option>
+                <option value="Electricity">Electricity</option>
+                <option value="Classroom">Classroom</option>
+                <option value="Washroom">Washroom</option>
+                <option value="Library">Library</option>
+                <option value="Laboratory">Laboratory</option>
+                <option value="College Bus">College Bus</option>
+                <option value="Cleanliness">Cleanliness</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label for="location">Problem Location</label>
+
+            <input
+                type="text"
+                id="location"
+                placeholder="Enter problem location"
+                maxlength="150"
+                required
+            >
+
+            <label for="description">Complaint Description</label>
+
+            <textarea
+                id="description"
+                placeholder="Describe your problem..."
+                minlength="10"
+                maxlength="2000"
+                required
+            ></textarea>
+
+            <button type="submit" id="submitButton">
+                Submit Complaint
+            </button>
+
+        </form>
+
+        <p id="message"></p>
+
+        <div id="receipt">
+
+            <h3>Complaint Receipt</h3>
+
+            <p>Your reference number:</p>
+            <p id="referenceNumber"></p>
+
+            <br>
+
+            <p>Your tracking code:</p>
+            <p id="trackingCode"></p>
+
+            <br>
+
+            <p>
+                Keep these details safe for future tracking.
+            </p>
+
+        </div>
+
+        <a href="index.html" class="back-link">
+            Back to Home
+        </a>
+
+    </div>
+
+</main>
+
+<script type="module">
+
+import { supabase } from "./js/supabase.js";
+
+const form = document.getElementById("complaintForm");
+
+const receipt = document.getElementById("receipt");
+
+const submitButton = document.getElementById("submitButton");
+
+const message = document.getElementById("message");
+
+let isSubmitting = false;
+
+// Complaint submission
+form.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+        return;
+    }
+
+    const category =
+        document.getElementById("category").value;
+
+    const location =
+        document.getElementById("location").value.trim();
+
+    const description =
+        document.getElementById("description").value.trim();
+
+    // Validate empty fields
+    if (!category || !location || !description) {
+
+        message.textContent =
+            "Please fill in all fields.";
+
+        return;
+
+    }
+
+    // Validate description length
+    if (description.length < 10) {
+
+        message.textContent =
+            "Description must contain at least 10 characters.";
+
+        return;
+
+    }
+
+    // Start submission
+    isSubmitting = true;
+
+    submitButton.disabled = true;
+
+    submitButton.textContent = "Submitting...";
+
+    message.textContent = "Please wait...";
+
+    // Hide previous receipt
+    receipt.style.display = "none";
+
+    try {
+
+        // Send complaint to Supabase
+        const { data, error } =
+            await supabase.functions.invoke(
+                "submit-complaint",
+                {
+                    body: {
+                        category: category,
+                        location: location,
+                        description: description
+                    }
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || !data.success) {
+
+            throw new Error(
+                data?.error || "Submission failed."
+            );
+
+        }
+
+        // Display reference number
+        document.getElementById("referenceNumber").textContent =
+            data.reference_number;
+
+        // Display tracking code
+        document.getElementById("trackingCode").textContent =
+            data.tracking_code;
+
+        // Show receipt
+        receipt.style.display = "block";
+
+        message.textContent =
+            "Complaint submitted successfully!";
+
+        // Clear form
+        form.reset();
+
+        // Scroll to receipt
+        receipt.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+    } catch (error) {
+
+        console.error("Submission error:", error);
+
+        message.textContent =
+            "Error: " + (error.message || "Unknown error");
+
+    } finally {
+
+        isSubmitting = false;
+
+        submitButton.disabled = false;
+
+        submitButton.textContent = "Submit Complaint";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

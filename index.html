@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampusCare</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+    color: #263238;
+}
+
+header {
+    background: #12345a;
+    color: white;
+    text-align: center;
+    padding: 28px 15px;
+}
+
+header h1 {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+header p {
+    font-size: 15px;
+}
+
+main {
+    min-height: 70vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 25px;
+}
+
+.welcome {
+    background: white;
+    max-width: 550px;
+    width: 100%;
+    padding: 40px 25px;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.welcome h2 {
+    color: #12345a;
+    margin-bottom: 18px;
+}
+
+.welcome p {
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+.submit-btn {
+    display: inline-block;
+    background: #00a99d;
+    color: white;
+    padding: 14px 25px;
+    border-radius: 7px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.submit-btn:hover {
+    background: #008f85;
+}
+
+.admin-link {
+    display: block;
+    margin-top: 22px;
+    color: #12345a;
+    text-decoration: none;
+}
+
+footer {
+    background: #12345a;
+    color: white;
+    text-align: center;
+    padding: 18px;
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>CampusCare</h1>
+    <p>Anonymous College Complaint Management System</p>
+</header>
+
+<main>
+    <div class="welcome">
+
+        <h2>Welcome to CampusCare</h2>
+
+        <p>
+            Report your college problems safely.
+            Your identity will remain private.
+        </p>
+
+        <a href="student.html" class="submit-btn">
+            Submit a Complaint
+        </a>
+
+        <a href="admin.html" class="admin-link">
+            Admin Login
+        </a>
+
+    </div>
+</main>
+
+<footer>
+    <p>Developed by Team HumanTech</p>
+    <p>© 2026 CampusCare</p>
+</footer>
+
+</body>
+</html>

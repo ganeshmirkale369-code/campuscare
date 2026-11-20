@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Complaint - CampusCare</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #263238;
+        }
+
+        header {
+            background: #12345a;
+            color: white;
+            text-align: center;
+            padding: 25px 15px;
+        }
+
+        main {
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .track-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            color: #12345a;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd3dc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background: #00a99d;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #result {
+            display: none;
+            margin-top: 20px;
+            padding: 18px;
+            background: #e8f8f5;
+            border-radius: 8px;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #12345a;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>CampusCare</h1>
+    <p>Complaint Tracking System</p>
+</header>
+
+<main>
+    <div class="track-box">
+
+        <h2>Track Your Complaint</h2>
+
+        <form id="trackForm">
+
+            <label for="referenceNumber">Reference Number</label>
+            <input
+                type="text"
+                id="referenceNumber"
+                placeholder="Example: CC-2026-123456"
+                required
+            >
+
+            <label for="trackingCode">Tracking Code</label>
+            <input
+                type="text"
+                id="trackingCode"
+                placeholder="Enter your 8-character code"
+                maxlength="8"
+                required
+            >
+
+            <button type="submit">Track Complaint</button>
+
+        </form>
+
+        <div id="result">
+            <h3>Complaint Details</h3>
+            <p id="status"></p>
+        </div>
+
+        <a href="index.html" class="back-link">Back to Home</a>
+
+    </div>
+</main>
+
+<script type="module">
+import { supabase } from "./js/supabase.js";
+
+const form = document.getElementById("trackForm");
+const result = document.getElementById("result");
+
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const referenceNumber = document.getElementById("referenceNumber").value.trim();
+    const trackingCode = document.getElementById("trackingCode").value.trim().toUpperCase();
+    const button = form.querySelector("button[type='submit']");
+
+    button.disabled = true;
+    button.textContent = "Checking...";
+    result.style.display = "none";
+
+    try {
+        const { data, error } = await supabase.functions.invoke(
+            "track-complaint",
+            {
+                body: {
+                    reference_number: referenceNumber,
+                    tracking_code: trackingCode
+                }
+            }
+        );
+
+        if (error) throw error;
+        if (!data || !data.success) {
+            throw new Error(data?.message || "Complaint not found.");
+        }
+
+        const complaint = data.complaint;
+        result.replaceChildren();
+
+        const heading = document.createElement("h3");
+        heading.textContent = "Complaint Details";
+        result.appendChild(heading);
+
+        const details = [
+            ["Reference", complaint.reference_number],
+            ["Category", complaint.category],
+            ["Location", complaint.location],
+            ["Status", complaint.status],
+            ["Submitted", new Date(complaint.created_at).toLocaleString()]
+        ];
+
+        for (const [label, value] of details) {
+            const paragraph = document.createElement("p");
+            const strong = document.createElement("strong");
+            strong.textContent = label + ": ";
+            paragraph.append(strong, document.createTextNode(String(value ?? "")));
+            result.appendChild(paragraph);
+        }
+
+        result.style.display = "block";
+    } catch (error) {
+        alert(error.message || "Unable to track complaint.");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Track Complaint";
+    }
+});
+</script>
+</body>
+</html>
+
